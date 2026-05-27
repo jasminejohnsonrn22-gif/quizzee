@@ -305,6 +305,12 @@
 </div>
 
 <script>
+  // ─────────────────────────────────────────────
+  // PASTE YOUR ANTHROPIC API KEY HERE
+  const ANTHROPIC_API_KEY = 'sk-ant-YOUR-KEY-HERE';
+  // Get a key at: https://console.anthropic.com
+  // ─────────────────────────────────────────────
+
   let correct = 0, wrong = 0, streak = 0;
   let currentClue = null;
   let answered = false;
@@ -356,7 +362,7 @@ Respond ONLY with valid JSON, no markdown, no extra text:
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
@@ -414,7 +420,7 @@ Respond ONLY with valid JSON, no markdown:
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
