@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeopardy! AI Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #05102a;
+    --blue: #0a1e5e;
+    --gold: #c9a84c;
+    --gold-light: #e8cc7e;
+    --gold-dim: #6b5020;
+    --cream: #f4efe4;
+    --slate: #162040;
+    --text: #ddd5c0;
+    --text-dim: #8a7f6a;
+    --correct: #2e7d4f;
+    --wrong: #8b2020;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--navy);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 18px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Header */
+  header {
+    width: 100%;
+    text-align: center;
+    padding: 36px 24px 24px;
+    background: linear-gradient(180deg, #0d1f55 0%, var(--navy) 100%);
+    border-bottom: 1px solid var(--gold-dim);
+  }
+  header .eyebrow { font-size: 11px; letter-spacing: 0.4em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  header h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: var(--gold-light); text-shadow: 0 0 40px rgba(201,168,76,0.35); line-height: 1.1; }
+
+  /* Controls bar */
+  .controls {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 20px 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  select, .btn {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95rem;
+    border-radius: 3px;
+    border: 1px solid var(--gold-dim);
+    background: var(--slate);
+    color: var(--text);
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a84c' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select:focus { outline: none; border-color: var(--gold); }
+
+  .btn { background: var(--gold-dim); color: var(--cream); border-color: var(--gold-dim); font-weight: 600; letter-spacing: 0.04em; }
+  .btn:hover { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: var(--gold); }
+  .btn.secondary:hover { background: rgba(201,168,76,0.1); }
+
+  /* Score bar */
+  .scorebar {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    padding: 0 24px 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .scorebar span { color: var(--gold-light); font-weight: 600; font-size: 1rem; }
+
+  /* Main card area */
+  .card-wrap {
+    width: 100%;
+    max-width: 700px;
+    padding: 0 24px 60px;
+    flex: 1;
+  }
+
+  /* Value badge */
+  .value-badge {
+    display: inline-block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .category-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  /* Clue card */
+  .clue-card {
+    background: var(--blue);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    padding: 36px 32px;
+    margin-bottom: 24px;
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .clue-card.correct { border-color: var(--correct); background: rgba(46,125,79,0.12); }
+  .clue-card.wrong { border-color: var(--wrong); background: rgba(139,32,32,0.12); }
+
+  .clue-text {
+    font-size: 1.2rem;
+    line-height: 1.7;
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+  }
+
+  .loading-text {
+    color: var(--text-dim);
+    font-style: italic;
+    text-align: center;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* Answer input */
+  .answer-section { margin-bottom: 20px; }
+  .answer-label { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+
+  textarea {
+    width: 100%;
+    background: var(--slate);
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    color: var(--cream);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    padding: 14px 16px;
+    resize: none;
+    height: 70px;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--gold); }
+  textarea::placeholder { color: var(--text-dim); }
+
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Feedback */
+  .feedback {
+    background: var(--slate);
+    border-radius: 3px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: none;
+    border-left: 3px solid var(--gold-dim);
+  }
+  .feedback.visible { display: block; }
+  .feedback.correct-fb { border-left-color: var(--correct); }
+  .feedback.wrong-fb { border-left-color: var(--wrong); }
+
+  .feedback-verdict {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .feedback.correct-fb .feedback-verdict { color: #5ec98a; }
+  .feedback.wrong-fb .feedback-verdict { color: #e07070; }
+
+  .feedback-answer { color: var(--gold-light); font-style: italic; font-size: 1rem; margin-bottom: 10px; }
+  .feedback-explanation { color: var(--text); font-size: 0.97rem; line-height: 1.7; }
+
+  /* Reveal answer */
+  .reveal-answer {
+    color: var(--gold-light);
+    font-style: italic;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    padding: 12px 16px;
+    background: rgba(201,168,76,0.07);
+    border-radius: 3px;
+    display: none;
+  }
+  .reveal-answer.visible { display: block; }
+
+  /* Start screen */
+  .start-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .start-screen p { color: var(--text-dim); font-size: 1.05rem; line-height: 1.8; max-width: 480px; margin: 0 auto 28px; }
+  .start-screen .big-btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    padding: 16px 40px;
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+  }
+  .start-screen .big-btn:hover { background: var(--gold-light); }
+
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn 0.4s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Unlimited AI Practice</div>
+  <h1>Jeopardy! Quiz</h1>
+</header>
+
+<div class="controls">
+  <select id="categorySelect">
+    <option value="History">📜 History</option>
+    <option value="Geography">🌍 Geography</option>
+    <option value="Literature">📚 Literature</option>
+    <option value="Science">🔬 Science & Nature</option>
+    <option value="Pop Culture">🎬 Pop Culture</option>
+    <option value="Sports">🏆 Sports</option>
+    <option value="Mixed">🎲 Mixed</option>
+  </select>
+  <select id="difficultySelect">
+    <option value="$200">$200 — Easy</option>
+    <option value="$400">$400</option>
+    <option value="$600" selected>$600 — Medium</option>
+    <option value="$800">$800</option>
+    <option value="$1000">$1000 — Hard</option>
+    <option value="mixed">Mixed Difficulty</option>
+  </select>
+  <button class="btn" id="newClueBtn" onclick="generateClue()">New Clue</button>
+</div>
+
+<div class="scorebar">
+  Correct: <span id="scoreCorrect">0</span> &nbsp;|&nbsp; Wrong: <span id="scoreWrong">0</span> &nbsp;|&nbsp; Streak: <span id="scoreStreak">0</span>
+</div>
+
+<div class="card-wrap">
+  <!-- Start screen -->
+  <div class="start-screen" id="startScreen">
+    <p>Pick a category and difficulty, then hit <strong>New Clue</strong> to begin. Claude will generate unlimited, never-repeating Jeopardy clues and grade your answers with explanations.</p>
+    <button class="big-btn" onclick="generateClue()">Start Practicing</button>
+  </div>
+
+  <!-- Quiz area (hidden until first clue) -->
+  <div id="quizArea" style="display:none">
+    <div class="category-label" id="clueCategory"></div>
+    <div class="value-badge" id="clueValue"></div>
+
+    <div class="clue-card" id="clueCard">
+      <div class="clue-text loading-text" id="clueText">Generating clue…</div>
+    </div>
+
+    <div class="answer-section">
+      <div class="answer-label">Your Answer (phrase it as a question)</div>
+      <textarea id="userAnswer" placeholder='e.g. "Who is Abraham Lincoln?" or "What is the Amazon River?"'></textarea>
+    </div>
+
+    <div class="action-row">
+      <button class="btn" id="submitBtn" onclick="submitAnswer()">Submit Answer</button>
+      <button class="btn secondary" id="revealBtn" onclick="revealAnswer()" style="display:none">Reveal Answer</button>
+      <button class="btn secondary" id="nextBtn" onclick="generateClue()" style="display:none">Next Clue →</button>
+    </div>
+
+    <div style="height:16px"></div>
+
+    <div class="reveal-answer" id="revealBox"></div>
+    <div class="feedback" id="feedbackBox">
+      <div class="feedback-verdict" id="feedbackVerdict"></div>
+      <div class="feedback-answer" id="feedbackAnswer"></div>
+      <div class="feedback-explanation" id="feedbackExplanation"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let correct = 0, wrong = 0, streak = 0;
+  let currentClue = null;
+  let answered = false;
+  let usedClues = [];
+
+  async function generateClue() {
+    const category = document.getElementById('categorySelect').value;
+    const difficulty = document.getElementById('difficultySelect').value;
+    const value = difficulty === 'mixed'
+      ? ['$200','$400','$600','$800','$1000'][Math.floor(Math.random()*5)]
+      : difficulty;
+
+    // Reset UI
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('clueCard').className = 'clue-card fade-in';
+    document.getElementById('clueText').className = 'clue-text loading-text';
+    document.getElementById('clueText').textContent = 'Generating clue…';
+    document.getElementById('userAnswer').value = '';
+    document.getElementById('userAnswer').disabled = false;
+    document.getElementById('submitBtn').style.display = 'inline-block';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('revealBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('feedbackBox').className = 'feedback';
+    document.getElementById('revealBox').className = 'reveal-answer';
+    document.getElementById('clueCategory').textContent = category === 'Mixed' ? '' : category.toUpperCase();
+    document.getElementById('clueValue').textContent = value;
+    document.getElementById('newClueBtn').disabled = true;
+    answered = false;
+
+    const avoidList = usedClues.slice(-20).join('; ');
+
+    const prompt = `You are a Jeopardy! clue writer. Generate ONE clue for the category "${category}" at difficulty level ${value} (on a $200–$1000 scale).
+
+Rules:
+- The clue is a statement; the correct response is phrased as a question (e.g. "Who is...?" or "What is...?")
+- Be accurate, specific, and clever — like a real Jeopardy clue
+- Do NOT repeat these recent topics: ${avoidList || 'none'}
+- Vary the topic and angle every time
+
+Respond ONLY with valid JSON, no markdown, no extra text:
+{
+  "clue": "the clue text here",
+  "answer": "What/Who is X?",
+  "topic": "brief topic label (2-4 words)"
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const raw = data.content.find(b => b.type === 'text')?.text || '';
+      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      currentClue = parsed;
+      usedClues.push(parsed.topic);
+
+      document.getElementById('clueText').className = 'clue-text';
+      document.getElementById('clueText').textContent = parsed.clue;
+      if (category === 'Mixed') {
+        document.getElementById('clueCategory').textContent = parsed.topic.toUpperCase();
+      }
+      document.getElementById('revealBtn').style.display = 'inline-block';
+    } catch(e) {
+      document.getElementById('clueText').textContent = 'Error generating clue. Please try again.';
+    }
+    document.getElementById('newClueBtn').disabled = false;
+  }
+
+  async function submitAnswer() {
+    if (!currentClue || answered) return;
+    const userAns = document.getElementById('userAnswer').value.trim();
+    if (!userAns) return;
+
+    answered = true;
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('userAnswer').disabled = true;
+    document.getElementById('revealBtn').style.display = 'none';
+    document.getElementById('feedbackBox').className = 'feedback visible';
+    document.getElementById('feedbackVerdict').textContent = 'Checking…';
+    document.getElementById('feedbackAnswer').textContent = '';
+    document.getElementById('feedbackExplanation').textContent = '';
+
+    const prompt = `You are a Jeopardy! judge. 
+
+Clue: "${currentClue.clue}"
+Correct answer: "${currentClue.answer}"
+Contestant's response: "${userAns}"
+
+Judge whether the contestant's response is correct. Be fair — accept reasonable phrasings, common name variations, and partial matches if the core answer is right. Don't require exact wording of "Who is" vs "What is."
+
+Respond ONLY with valid JSON, no markdown:
+{
+  "correct": true or false,
+  "verdict": "Correct!" or "Incorrect.",
+  "correct_answer": "the full correct response",
+  "explanation": "1-3 sentences explaining why this is the answer and giving useful context to help the player learn"
+}`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      const raw = data.content.find(b => b.type === 'text')?.text || '';
+      const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+      if (result.correct) {
+        correct++; streak++;
+        document.getElementById('clueCard').classList.add('correct');
+        document.getElementById('feedbackBox').classList.add('correct-fb');
+      } else {
+        wrong++; streak = 0;
+        document.getElementById('clueCard').classList.add('wrong');
+        document.getElementById('feedbackBox').classList.add('wrong-fb');
+      }
+
+      document.getElementById('scoreCorrect').textContent = correct;
+      document.getElementById('scoreWrong').textContent = wrong;
+      document.getElementById('scoreStreak').textContent = streak;
+      document.getElementById('feedbackVerdict').textContent = result.verdict;
+      document.getElementById('feedbackAnswer').textContent = result.correct_answer;
+      document.getElementById('feedbackExplanation').textContent = result.explanation;
+      document.getElementById('nextBtn').style.display = 'inline-block';
+
+    } catch(e) {
+      document.getElementById('feedbackVerdict').textContent = 'Could not grade answer. Try again.';
+    }
+  }
+
+  function revealAnswer() {
+    if (!currentClue) return;
+    answered = true;
+    document.getElementById('revealBox').className = 'reveal-answer visible';
+    document.getElementById('revealBox').textContent = currentClue.answer;
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('revealBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  }
+
+  // Allow Enter key in textarea to submit
+  document.getElementById('userAnswer')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnswer(); }
+  });
+</script>
+</body>
+</html>
