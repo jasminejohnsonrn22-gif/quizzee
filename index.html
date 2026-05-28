@@ -24,7 +24,7 @@
   header h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: var(--gold-light); text-shadow: 0 0 40px rgba(201,168,76,0.35); line-height: 1.1; }
 
   /* API Key screen */
-  .key-screen { width: 100%; max-width: 560px; padding: 48px 24px; text-align: center; }
+  .key-screen { width: 100%; max-width: 560px; padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; }
   .key-screen h2 { font-family: 'Playfair Display', serif; color: var(--gold-light); font-size: 1.6rem; margin-bottom: 12px; }
   .key-screen p { color: var(--text-dim); font-size: 1rem; line-height: 1.7; margin-bottom: 24px; }
   .key-screen a { color: var(--gold); }
@@ -45,9 +45,9 @@
   .btn.big { font-family: 'Playfair Display', serif; font-size: 1.2rem; padding: 16px 40px; background: var(--gold); color: var(--navy); border: none; font-weight: 700; }
   .btn.big:hover { background: var(--gold-light); color: var(--navy); }
 
-  .scorebar { display: flex; gap: 24px; justify-content: center; font-size: 0.85rem; color: var(--text-dim); padding: 0 24px 16px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .scorebar { display: flex; gap: 24px; justify-content: center; font-size: 0.85rem; color: var(--text-dim); padding: 0 24px 16px; letter-spacing: 0.06em; text-transform: uppercase; flex-wrap: wrap; align-items: center; }
   .scorebar span { color: var(--gold-light); font-weight: 600; font-size: 1rem; }
-  .key-reset { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; text-decoration: underline; margin-left: 16px; }
+  .key-reset { font-size: 0.75rem; color: var(--text-dim); cursor: pointer; text-decoration: underline; }
   .key-reset:hover { color: var(--gold); }
 
   .card-wrap { width: 100%; max-width: 700px; padding: 0 24px 60px; flex: 1; }
@@ -65,17 +65,24 @@
   textarea { width: 100%; background: var(--slate); border: 1px solid var(--gold-dim); border-radius: 3px; color: var(--cream); font-family: 'Crimson Pro', serif; font-size: 1.05rem; font-style: italic; padding: 14px 16px; resize: none; height: 70px; transition: border-color 0.2s; }
   textarea:focus { outline: none; border-color: var(--gold); }
   textarea::placeholder { color: var(--text-dim); }
-  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 
-  .feedback { background: var(--slate); border-radius: 3px; padding: 20px 24px; margin-bottom: 20px; display: none; border-left: 3px solid var(--gold-dim); }
+  /* Feedback box */
+  .feedback { background: var(--slate); border-radius: 4px; padding: 24px; margin-top: 16px; display: none; border-left: 4px solid var(--gold-dim); }
   .feedback.visible { display: block; }
-  .feedback.correct-fb { border-left-color: var(--correct); }
-  .feedback.wrong-fb { border-left-color: var(--wrong); }
-  .feedback-verdict { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .feedback.correct-fb { border-left-color: #5ec98a; }
+  .feedback.wrong-fb { border-left-color: #e07070; }
+
+  .feedback-verdict { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
   .feedback.correct-fb .feedback-verdict { color: #5ec98a; }
   .feedback.wrong-fb .feedback-verdict { color: #e07070; }
-  .feedback-answer { color: var(--gold-light); font-style: italic; font-size: 1rem; margin-bottom: 10px; }
-  .feedback-explanation { color: var(--text); font-size: 0.97rem; line-height: 1.7; }
+
+  .feedback-answer { color: var(--gold-light); font-style: italic; font-size: 1rem; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(201,168,76,0.15); }
+
+  .feedback-section-label { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; margin-top: 14px; }
+  .feedback-explanation { color: var(--text); font-size: 1rem; line-height: 1.8; }
+  .feedback-memory { color: var(--cream); font-size: 1rem; line-height: 1.8; background: rgba(201,168,76,0.08); border-radius: 3px; padding: 10px 14px; margin-top: 6px; font-style: italic; }
+
   .reveal-answer { color: var(--gold-light); font-style: italic; font-size: 1.05rem; margin-bottom: 10px; padding: 12px 16px; background: rgba(201,168,76,0.07); border-radius: 3px; display: none; }
   .reveal-answer.visible { display: block; }
 
@@ -94,73 +101,84 @@
 </header>
 
 <!-- API KEY SETUP SCREEN -->
-<div class="key-screen" id="keyScreen">
-  <h2>Enter Your API Key</h2>
-  <p>This app uses Claude to generate unlimited Jeopardy clues. You need a free Anthropic API key to get started.<br><br>
-  Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — your key is saved in your browser only and never shared.</p>
-  <input class="key-input" type="password" id="keyInput" placeholder="sk-ant-..." />
-  <div class="key-error" id="keyError">Invalid key — make sure it starts with sk-ant-</div>
-  <button class="btn big" onclick="saveKey()">Save Key & Start</button>
-  <div class="key-note">Your key is stored locally in your browser. It never leaves your device.</div>
+<div id="keyScreen">
+  <div class="key-screen">
+    <h2>Enter Your API Key</h2>
+    <p>This app uses Claude to generate unlimited Jeopardy clues and grade your answers.<br><br>
+    Get a free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Your key is saved in your browser only and never shared.</p>
+    <input class="key-input" type="password" id="keyInput" placeholder="sk-ant-..." />
+    <div class="key-error" id="keyError">Key must start with sk-ant-</div>
+    <button class="btn big" onclick="saveKey()">Save Key &amp; Start</button>
+    <div class="key-note">Stored locally in your browser. Never sent anywhere except Anthropic.</div>
+  </div>
 </div>
 
-<!-- MAIN QUIZ (hidden until key set) -->
-<div id="mainApp" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;">
-  <div class="controls">
-    <select id="categorySelect">
-      <option value="History">📜 History</option>
-      <option value="Geography">🌍 Geography</option>
-      <option value="Literature">📚 Literature</option>
-      <option value="Science">🔬 Science & Nature</option>
-      <option value="Pop Culture">🎬 Pop Culture</option>
-      <option value="Sports">🏆 Sports</option>
-      <option value="Mixed">🎲 Mixed</option>
-    </select>
-    <select id="difficultySelect">
-      <option value="$200">$200 — Easy</option>
-      <option value="$400">$400</option>
-      <option value="$600" selected>$600 — Medium</option>
-      <option value="$800">$800</option>
-      <option value="$1000">$1000 — Hard</option>
-      <option value="mixed">Mixed Difficulty</option>
-    </select>
-    <button class="btn" id="newClueBtn" onclick="generateClue()">New Clue</button>
-  </div>
-
-  <div class="scorebar">
-    Correct: <span id="scoreCorrect">0</span> &nbsp;|&nbsp;
-    Wrong: <span id="scoreWrong">0</span> &nbsp;|&nbsp;
-    Streak: <span id="scoreStreak">0</span>
-    <span class="key-reset" onclick="resetKey()">Change API Key</span>
-  </div>
-
-  <div class="card-wrap">
-    <div class="start-screen" id="startScreen">
-      <p>Pick a category and difficulty, then hit <strong>New Clue</strong> to begin.</p>
-      <button class="btn big" onclick="generateClue()">Start Practicing</button>
+<!-- MAIN QUIZ -->
+<div id="mainApp" style="display:none; width:100%;">
+  <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
+    <div class="controls">
+      <select id="categorySelect">
+        <option value="History">📜 History</option>
+        <option value="Geography">🌍 Geography</option>
+        <option value="Literature">📚 Literature</option>
+        <option value="Science">🔬 Science &amp; Nature</option>
+        <option value="Pop Culture">🎬 Pop Culture</option>
+        <option value="Sports">🏆 Sports</option>
+        <option value="Mixed">🎲 Mixed</option>
+      </select>
+      <select id="difficultySelect">
+        <option value="$200">$200 — Easy</option>
+        <option value="$400">$400</option>
+        <option value="$600" selected>$600 — Medium</option>
+        <option value="$800">$800</option>
+        <option value="$1000">$1000 — Hard</option>
+        <option value="mixed">Mixed Difficulty</option>
+      </select>
+      <button class="btn" id="newClueBtn" onclick="generateClue()">New Clue</button>
     </div>
 
-    <div id="quizArea" style="display:none">
-      <div class="category-label" id="clueCategory"></div>
-      <div class="value-badge" id="clueValue"></div>
-      <div class="clue-card" id="clueCard">
-        <div class="clue-text loading-text" id="clueText">Generating clue…</div>
+    <div class="scorebar">
+      Correct: <span id="scoreCorrect">0</span>
+      &nbsp;|&nbsp; Wrong: <span id="scoreWrong">0</span>
+      &nbsp;|&nbsp; Streak: <span id="scoreStreak">0</span>
+      &nbsp;|&nbsp; <span class="key-reset" onclick="resetKey()">Change API Key</span>
+    </div>
+
+    <div class="card-wrap">
+      <div class="start-screen" id="startScreen">
+        <p>Pick a category and difficulty, then hit <strong>New Clue</strong> to begin.</p>
+        <button class="btn big" onclick="generateClue()">Start Practicing</button>
       </div>
-      <div class="answer-section">
-        <div class="answer-label">Your Answer (phrase it as a question)</div>
-        <textarea id="userAnswer" placeholder='e.g. "Who is Abraham Lincoln?" or "What is the Amazon River?"'></textarea>
-      </div>
-      <div class="action-row">
-        <button class="btn" id="submitBtn" onclick="submitAnswer()">Submit Answer</button>
-        <button class="btn secondary" id="revealBtn" onclick="revealAnswer()" style="display:none">Reveal Answer</button>
-        <button class="btn secondary" id="nextBtn" onclick="generateClue()" style="display:none">Next Clue →</button>
-      </div>
-      <div style="height:16px"></div>
-      <div class="reveal-answer" id="revealBox"></div>
-      <div class="feedback" id="feedbackBox">
-        <div class="feedback-verdict" id="feedbackVerdict"></div>
-        <div class="feedback-answer" id="feedbackAnswer"></div>
-        <div class="feedback-explanation" id="feedbackExplanation"></div>
+
+      <div id="quizArea" style="display:none;">
+        <div class="category-label" id="clueCategory"></div>
+        <div class="value-badge" id="clueValue"></div>
+
+        <div class="clue-card" id="clueCard">
+          <div class="clue-text loading-text" id="clueText">Generating clue…</div>
+        </div>
+
+        <div class="answer-section">
+          <div class="answer-label">Your Answer (phrase it as a question)</div>
+          <textarea id="userAnswer" placeholder='e.g. "Who is Abraham Lincoln?" or "What is the Amazon River?"'></textarea>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" id="submitBtn" onclick="submitAnswer()">Submit Answer</button>
+          <button class="btn secondary" id="revealBtn" onclick="revealAnswer()" style="display:none;">Reveal Answer</button>
+          <button class="btn secondary" id="nextBtn" onclick="generateClue()" style="display:none;">Next Clue →</button>
+        </div>
+
+        <div class="reveal-answer" id="revealBox"></div>
+
+        <div class="feedback" id="feedbackBox">
+          <div class="feedback-verdict" id="feedbackVerdict"></div>
+          <div class="feedback-answer" id="feedbackAnswer"></div>
+          <div class="feedback-section-label">Explanation</div>
+          <div class="feedback-explanation" id="feedbackExplanation"></div>
+          <div class="feedback-section-label">Memory Cue</div>
+          <div class="feedback-memory" id="feedbackMemory"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -172,7 +190,7 @@
   let answered = false;
   let usedClues = [];
 
-  function getKey() { return localStorage.getItem('anthropic_key'); }
+  function getKey() { return localStorage.getItem('jeopardy_api_key'); }
 
   function saveKey() {
     const key = document.getElementById('keyInput').value.trim();
@@ -180,31 +198,47 @@
       document.getElementById('keyError').style.display = 'block';
       return;
     }
-    localStorage.setItem('anthropic_key', key);
+    localStorage.setItem('jeopardy_api_key', key);
     showApp();
   }
 
   function resetKey() {
-    localStorage.removeItem('anthropic_key');
+    localStorage.removeItem('jeopardy_api_key');
     document.getElementById('mainApp').style.display = 'none';
-    document.getElementById('keyScreen').style.display = 'flex';
-    document.getElementById('keyScreen').style.flexDirection = 'column';
-    document.getElementById('keyScreen').style.alignItems = 'center';
+    document.getElementById('keyScreen').style.display = 'block';
     document.getElementById('keyInput').value = '';
+    document.getElementById('keyError').style.display = 'none';
   }
 
   function showApp() {
     document.getElementById('keyScreen').style.display = 'none';
-    const app = document.getElementById('mainApp');
-    app.style.display = 'flex';
-    app.style.flexDirection = 'column';
-    app.style.alignItems = 'center';
+    document.getElementById('mainApp').style.display = 'block';
   }
 
-  // On load — check if key already saved
   window.addEventListener('load', () => {
     if (getKey()) showApp();
   });
+
+  async function callClaude(prompt, maxTokens) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': getKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: maxTokens,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.find(b => b.type === 'text')?.text || '';
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  }
 
   async function generateClue() {
     const key = getKey();
@@ -213,9 +247,10 @@
     const category = document.getElementById('categorySelect').value;
     const difficulty = document.getElementById('difficultySelect').value;
     const value = difficulty === 'mixed'
-      ? ['$200','$400','$600','$800','$1000'][Math.floor(Math.random()*5)]
+      ? ['$200','$400','$600','$800','$1000'][Math.floor(Math.random() * 5)]
       : difficulty;
 
+    // Reset UI
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('quizArea').style.display = 'block';
     document.getElementById('clueCard').className = 'clue-card fade-in';
@@ -235,45 +270,27 @@
     answered = false;
 
     const avoidList = usedClues.slice(-20).join('; ');
-    const prompt = `You are a Jeopardy! clue writer. Generate ONE clue for the category "${category}" at difficulty level ${value} (on a $200–$1000 scale).
-
-Rules:
-- The clue is a statement; the correct response is phrased as a question
-- Be accurate, specific, and clever — like a real Jeopardy clue
-- Do NOT repeat these recent topics: ${avoidList || 'none'}
-- Vary the topic every time
-
-Respond ONLY with valid JSON, no markdown, no extra text:
-{"clue":"the clue text","answer":"What/Who is X?","topic":"brief topic 2-4 words"}`;
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 600,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const raw = data.content.find(b => b.type === 'text')?.text || '';
-      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
-      currentClue = parsed;
-      usedClues.push(parsed.topic);
+      const result = await callClaude(`You are a Jeopardy! clue writer. Generate ONE clue for the category "${category}" at difficulty level ${value} (on a $200-$1000 scale where $200 is easiest).
+
+Rules:
+- The clue is a statement; the response is phrased as a question ("Who is X?" or "What is X?")
+- Be accurate and specific like a real Jeopardy clue
+- Do NOT repeat these recent topics: ${avoidList || 'none'}
+
+Return ONLY a JSON object with no markdown, no extra text, exactly this format:
+{"clue":"the clue text here","answer":"Who is X? or What is X?","topic":"2-3 word topic label"}`, 400);
+
+      currentClue = result;
+      usedClues.push(result.topic);
       document.getElementById('clueText').className = 'clue-text';
-      document.getElementById('clueText').textContent = parsed.clue;
-      if (category === 'Mixed') document.getElementById('clueCategory').textContent = parsed.topic.toUpperCase();
+      document.getElementById('clueText').textContent = result.clue;
+      if (category === 'Mixed') document.getElementById('clueCategory').textContent = result.topic.toUpperCase();
       document.getElementById('revealBtn').style.display = 'inline-block';
     } catch(e) {
       document.getElementById('clueText').className = 'clue-text';
-      document.getElementById('clueText').textContent = '⚠️ ' + (e.message || 'Error — check your API key.');
+      document.getElementById('clueText').textContent = '⚠️ Error: ' + e.message;
     }
     document.getElementById('newClueBtn').disabled = false;
   }
@@ -282,7 +299,6 @@ Respond ONLY with valid JSON, no markdown, no extra text:
     if (!currentClue || answered) return;
     const userAns = document.getElementById('userAnswer').value.trim();
     if (!userAns) return;
-    const key = getKey();
 
     answered = true;
     document.getElementById('submitBtn').disabled = true;
@@ -292,37 +308,31 @@ Respond ONLY with valid JSON, no markdown, no extra text:
     document.getElementById('feedbackVerdict').textContent = 'Checking…';
     document.getElementById('feedbackAnswer').textContent = '';
     document.getElementById('feedbackExplanation').textContent = '';
+    document.getElementById('feedbackMemory').textContent = '';
 
-    const prompt = `You are a Jeopardy! judge.
+    try {
+      const result = await callClaude(`You are a Jeopardy! judge and teacher.
+
 Clue: "${currentClue.clue}"
 Correct answer: "${currentClue.answer}"
 Contestant response: "${userAns}"
-Judge fairly — accept reasonable phrasings and common name variations.
-Respond ONLY with valid JSON:
-{"correct":true or false,"verdict":"Correct!" or "Incorrect.","correct_answer":"full correct response","explanation":"4-5 sentences: explain why this is the answer, give historical or contextual background, share a related fact, and give a memory tip"}`;
 
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const raw = data.content.find(b => b.type === 'text')?.text || '';
-      const result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+First judge if the contestant is correct. Accept reasonable phrasings and common name variations.
 
-      if (result.correct) { correct++; streak++; document.getElementById('clueCard').classList.add('correct'); document.getElementById('feedbackBox').classList.add('correct-fb'); }
-      else { wrong++; streak = 0; document.getElementById('clueCard').classList.add('wrong'); document.getElementById('feedbackBox').classList.add('wrong-fb'); }
+Then write a detailed explanation and a memory cue.
+
+Return ONLY a JSON object with no markdown, no extra text, exactly this format:
+{"correct":true,"verdict":"Correct!" or "Incorrect.","correct_answer":"the full correct response phrased as a question","explanation":"3-4 sentences explaining the background, context, and significance of this answer","memory":"A vivid, memorable trick or association to help recall this fact — e.g. a rhyme, acronym, story, or visual image"}`, 700);
+
+      if (result.correct) {
+        correct++; streak++;
+        document.getElementById('clueCard').classList.add('correct');
+        document.getElementById('feedbackBox').classList.add('correct-fb');
+      } else {
+        wrong++; streak = 0;
+        document.getElementById('clueCard').classList.add('wrong');
+        document.getElementById('feedbackBox').classList.add('wrong-fb');
+      }
 
       document.getElementById('scoreCorrect').textContent = correct;
       document.getElementById('scoreWrong').textContent = wrong;
@@ -330,9 +340,12 @@ Respond ONLY with valid JSON:
       document.getElementById('feedbackVerdict').textContent = result.verdict;
       document.getElementById('feedbackAnswer').textContent = result.correct_answer;
       document.getElementById('feedbackExplanation').textContent = result.explanation;
+      document.getElementById('feedbackMemory').textContent = result.memory;
       document.getElementById('nextBtn').style.display = 'inline-block';
+
     } catch(e) {
-      document.getElementById('feedbackVerdict').textContent = '⚠️ ' + (e.message || 'Could not grade. Try again.');
+      document.getElementById('feedbackVerdict').textContent = '⚠️ Error: ' + e.message;
+      document.getElementById('nextBtn').style.display = 'inline-block';
     }
   }
 
@@ -340,7 +353,7 @@ Respond ONLY with valid JSON:
     if (!currentClue) return;
     answered = true;
     document.getElementById('revealBox').className = 'reveal-answer visible';
-    document.getElementById('revealBox').textContent = currentClue.answer;
+    document.getElementById('revealBox').textContent = '✦ ' + currentClue.answer;
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('revealBtn').style.display = 'none';
     document.getElementById('nextBtn').style.display = 'inline-block';
@@ -348,7 +361,8 @@ Respond ONLY with valid JSON:
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && document.activeElement.id === 'userAnswer') {
-      e.preventDefault(); submitAnswer();
+      e.preventDefault();
+      submitAnswer();
     }
   });
 
