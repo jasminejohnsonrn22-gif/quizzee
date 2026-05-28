@@ -349,7 +349,7 @@ Return ONLY a JSON object with no markdown, no extra text, exactly this format:
     }
   }
 
-  function revealAnswer() {
+  async function revealAnswer() {
     if (!currentClue) return;
     answered = true;
     document.getElementById('revealBox').className = 'reveal-answer visible';
@@ -357,6 +357,28 @@ Return ONLY a JSON object with no markdown, no extra text, exactly this format:
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('revealBtn').style.display = 'none';
     document.getElementById('nextBtn').style.display = 'inline-block';
+
+    // Show explanation and memory cue automatically
+    document.getElementById('feedbackBox').className = 'feedback visible wrong-fb';
+    document.getElementById('feedbackVerdict').textContent = 'Here is the explanation:';
+    document.getElementById('feedbackAnswer').textContent = currentClue.answer;
+    document.getElementById('feedbackExplanation').textContent = 'Loading explanation…';
+    document.getElementById('feedbackMemory').textContent = '';
+
+    try {
+      const result = await callClaude(`You are a Jeopardy! teacher.
+
+Clue: "${currentClue.clue}"
+Answer: "${currentClue.answer}"
+
+Return ONLY a JSON object with no markdown, no extra text, exactly this format:
+{"explanation":"3-4 sentences explaining the background, context, and significance of this answer","memory":"A vivid, memorable trick or association to help recall this fact — e.g. a rhyme, acronym, story, or visual image"}`, 700);
+
+      document.getElementById('feedbackExplanation').textContent = result.explanation;
+      document.getElementById('feedbackMemory').textContent = result.memory;
+    } catch(e) {
+      document.getElementById('feedbackExplanation').textContent = '⚠️ Could not load explanation: ' + e.message;
+    }
   }
 
   document.addEventListener('keydown', e => {
