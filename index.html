@@ -257,7 +257,7 @@ Respond ONLY with valid JSON, no markdown, no extra text:
         },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001',
-          max_tokens: 300,
+          max_tokens: 600,
           messages: [{ role: 'user', content: prompt }]
         })
       });
@@ -299,7 +299,7 @@ Correct answer: "${currentClue.answer}"
 Contestant response: "${userAns}"
 Judge fairly — accept reasonable phrasings and common name variations.
 Respond ONLY with valid JSON:
-{"correct":true or false,"verdict":"Correct!" or "Incorrect.","correct_answer":"full correct response","explanation":"1-2 sentences of context"}`;
+{"correct":true or false,"verdict":"Correct!" or "Incorrect.","correct_answer":"full correct response","explanation":"4-5 sentences: explain why this is the answer, give historical or contextual background, share a related fact, and give a memory tip"}`;
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
